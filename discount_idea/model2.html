@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Castle Quest: Retro RPG</title>
+    <!-- Importing a retro pixel font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff41;
+            --neon-yellow: #fcee0a;
+            --bg-dark: #0d0d15;
+            --text-color: #ffffff;
+            --pixel-scale: 4px;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            text-align: center;
+            padding: 20px;
+            text-shadow: 2px 2px 0px var(--neon-pink);
+            animation: glow 2s infinite alternate;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--neon-blue);
+        }
+
+        .subtitle {
+            font-size: 0.7rem;
+            color: var(--neon-green);
+        }
+
+        /* --- Game Container (The World) --- */
+        #game-stage {
+            position: relative;
+            width: 95%;
+            max-width: 800px;
+            height: 250px;
+            background: linear-gradient(to bottom, #1a0b2e 0%, #2d1b4e 60%, #101020 60%);
+            border: 4px solid var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue), inset 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        /* Parallax Background Elements */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background-image: 
+                radial-gradient(white 1px, transparent 1px),
+                radial-gradient(white 1px, transparent 1px);
+            background-size: 50px 50px, 100px 100px;
+            background-position: 0 0, 25px 25px;
+            opacity: 0.5;
+        }
+
+        .mountains {
+            position: absolute;
+            bottom: 40%; /* Starts at horizon */
+            width: 200%;
+            height: 100px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 L20 0 L40 20 L60 5 L80 20 L100 10 L120 20 L140 0 L160 20 L180 10 L200 20 Z" fill="%233b1e5d" stroke="%23ff00ff" stroke-width="1"/></svg>');
+            background-repeat: repeat-x;
+            background-size: 50% 100%;
+            transition: transform 0.1s linear;
+        }
+
+        /* The Castle (Destination) */
+        .castle-container {
+            position: absolute;
+            right: 20px;
+            bottom: 40%;
+            width: 80px;
+            height: 100px;
+            z-index: 5;
+        }
+
+        /* Pixel Art Castle (CSS/SVG) */
+        .castle-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 5px var(--neon-yellow));
+        }
+
+        /* The Ground */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40%;
+            background-color: #1e1e2e;
+            border-top: 4px solid var(--neon-green);
+            background-image: 
+                linear-gradient(45deg, #252535 25%, transparent 25%, transparent 75%, #252535 75%, #252535),
+                linear-gradient(45deg, #252535 25%, transparent 25%, transparent 75%, #252535 75%, #252535);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            z-index: 10;
+        }
+
+        /* The Hero (Character) */
+        #hero {
+            position: absolute;
+            bottom: 40%;
+            left: 10px; /* Starting position */
+            width: 40px;
+            height: 40px;
+            z-index: 20;
+            transition: left 1s ease-in-out;
+        }
+
+        .hero-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Animation Classes */
+        .walking .hero-svg {
+            animation: bob 0.4s infinite alternate;
+        }
+
+        @keyframes bob {
+            from { transform: translateY(0); }
+            to { transform: translateY(-3px); }
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px var(--neon-blue); }
+            to { text-shadow: 0 0 20px var(--neon-blue), 0 0 10px white; }
+        }
+
+        /* --- Controls & UI --- */
+        .controls-container {
+            width: 95%;
+            max-width: 800px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid var(--neon-pink);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            color: var(--neon-yellow);
+            font-size: 0.8rem;
+        }
+
+        input[type="number"] {
+            background: #000;
+            border: 2px solid var(--neon-blue);
+            color: white;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            width: 150px;
+            text-align: center;
+        }
+
+        button {
+            background: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--neon-pink);
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--neon-pink);
+        }
+
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px dashed var(--neon-green);
+            padding-top: 15px;
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+
+        .status-item span {
+            display: block;
+            color: white;
+            margin-top: 5px;
+            font-size: 1rem;
+        }
+
+        /* --- Result Modal --- */
+        #result-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #111;
+            border: 4px solid var(--neon-yellow);
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 0 30px var(--neon-yellow);
+            position: relative;
+        }
+
+        .modal-title {
+            color: var(--neon-yellow);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .discount-badge {
+            font-size: 3rem;
+            color: var(--neon-green);
+            margin: 20px 0;
+            text-shadow: 4px 4px 0 #000;
+        }
+
+        /* --- High Score List --- */
+        .high-scores {
+            margin-top: 20px;
+            width: 95%;
+            max-width: 800px;
+            border: 2px solid var(--neon-green);
+            padding: 15px;
+            background: rgba(0, 50, 0, 0.3);
+        }
+
+        .high-scores h3 {
+            margin-top: 0;
+            font-size: 0.8rem;
+            color: var(--neon-green);
+            text-align: center;
+            text-decoration: underline;
+        }
+
+        ol {
+            padding-left: 20px;
+            font-size: 0.7rem;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* --- Floating Message --- */
+        #floating-message {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border: 1px solid white;
+            font-size: 0.6rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>DISCOUNT CASTLE QUEST</h1>
+        <div class="subtitle">INPUT STEPS. WALK FAR. SAVE GOLD.</div>
+    </header>
+
+    <!-- Game World -->
+    <div id="game-stage">
+        <div class="stars"></div>
+        <div class="mountains" id="mountains"></div>
+        
+        <!-- Castle SVG -->
+        <div class="castle-container">
+            <svg class="castle-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <!-- Main Keep -->
+                <rect x="30" y="40" width="40" height="60" fill="#555" />
+                <!-- Left Tower -->
+                <rect x="10" y="20" width="20" height="80" fill="#444" />
+                <!-- Right Tower -->
+                <rect x="70" y="20" width="20" height="80" fill="#444" />
+                <!-- Battlements -->
+                <rect x="10" y="10" width="20" height="10" fill="#666" />
+                <rect x="70" y="10" width="20" height="10" fill="#666" />
+                <!-- Door -->
+                <rect x="42" y="70" width="16" height="30" fill="#220" />
+                <!-- Windows -->
+                <rect x="15" y="30" width="10" height="10" fill="#ff0" />
+                <rect x="75" y="30" width="10" height="10" fill="#ff0" />
+                <!-- Flag -->
+                <line x1="50" y1="40" x2="50" y2="10" stroke="#fff" stroke-width="2" />
+                <polygon points="50,10 70,20 50,30" fill="#f00" />
+            </svg>
+        </div>
+
+        <!-- Hero SVG -->
+        <div id="hero">
+            <svg class="hero-svg" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <!-- Body -->
+                <rect x="5" y="6" width="6" height="6" fill="#00f3ff" />
+                <rect x="5" y="12" width="2" height="3" fill="#0000aa" /> <!-- Leg -->
+                <rect x="9" y="12" width="2" height="3" fill="#0000aa" /> <!-- Leg -->
+                <rect x="4" y="6" width="1" height="4" fill="#00f3ff" /> <!-- Arm -->
+                <rect x="11" y="6" width="1" height="4" fill="#00f3ff" /> <!-- Arm -->
+                <!-- Head -->
+                <rect x="5" y="2" width="6" height="4" fill="#ffccaa" />
+                <!-- Helmet/Hair -->
+                <rect x="5" y="2" width="6" height="1" fill="#555" />
+                <!-- Eye -->
+                <rect x="9" y="3" width="1" height="1" fill="#000" />
+            </svg>
+            <div id="floating-message">Let's go!</div>
+        </div>
+
+        <div class="ground"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-container">
+        <div class="input-group">
+            <label for="step-input">ENTER STEPS:</label>
+            <input type="number" id="step-input" min="0" value="0" placeholder="e.g. 500">
+            <button onclick="processTurn()">WALK!</button>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-item">
+                DISTANCE
+                <span id="distance-display">0 m</span>
+            </div>
+            <div class="status-item" style="text-align: right;">
+                CURRENT DISCOUNT
+                <span id="discount-preview" style="color: var(--neon-pink)">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- High Score / Leaderboard -->
+    <div class="high-scores">
+        <h3>HIGH SCORES (TOP WALKERS)</h3>
+        <ol id="score-list">
+            <li>HERO - 2000 Steps (50% Off)</li>
+            <li>LINK - 1500 Steps (50% Off)</li>
+            <li>MARIO - 800 Steps (20% Off)</li>
+        </ol>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">JOURNAL UPDATE</h2>
+            <p id="modal-message">You have walked...</p>
+            <div class="discount-badge" id="modal-discount">0%</div>
+            <p>DISCOUNT UNLOCKED</p>
+            <br>
+            <button onclick="closeModal()">CONTINUE QUEST</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const MAX_STEPS_FOR_FULL_DISCOUNT = 1000;
+        const MAX_PIXEL_TRAVEL = 85; // Percentage of screen width the hero can travel (stops before castle)
+        
+        // DOM Elements
+        const hero = document.getElementById('hero');
+        const mountains = document.getElementById('mountains');
+        const stepInput = document.getElementById('step-input');
+        const distanceDisplay = document.getElementById('distance-display');
+        const discountPreview = document.getElementById('discount-preview');
+        const resultModal = document.getElementById('result-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalDiscount = document.getElementById('modal-discount');
+        const scoreList = document.getElementById('score-list');
+        const floatingMsg = document.getElementById('floating-message');
+
+        // State
+        let currentSteps = 0;
+        let totalStepsWalked = 0; // Accumulator for this session
+
+        // Helper: Format number with commas
+        const formatNum = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+        // Core Logic: Calculate Discount based on steps
+        function calculateDiscount(steps) {
+            if (steps < 200) return 0;
+            if (steps < 500) return 10;
+            if (steps < MAX_STEPS_FOR_FULL_DISCOUNT) return 20;
+            return 50; // Grand Prize
+        }
+
+        // Helper: Show floating text
+        function showFloatText(text) {
+            floatingMsg.innerText = text;
+            floatingMsg.style.opacity = 1;
+            setTimeout(() => {
+                floatingMsg.style.opacity = 0;
+            }, 1500);
+        }
+
+        // Main Turn Function
+        function processTurn() {
+            const inputVal = parseInt(stepInput.value);
+
+            if (isNaN(inputVal) || inputVal <= 0) {
+                showFloatText("Invalid Steps!");
+                return;
+            }
+
+            // Update State
+            const stepsWalkedThisTurn = inputVal;
+            totalStepsWalked += stepsWalkedThisTurn;
+
+            // Animation: Walking
+            hero.classList.add('walking');
+            showFloatText(`+${stepsWalkedThisTurn} Steps!`);
+
+            // Calculate Movement (Capped at visual max)
+            // The visual progress is non-linear to make it feel like a journey
+            let progressPercentage = (totalStepsWalked / MAX_STEPS_FOR_FULL_DISCOUNT) * MAX_PIXEL_TRAVEL;
+            if (progressPercentage > MAX_PIXEL_TRAVEL) progressPercentage = MAX_PIXEL_TRAVEL;
+
+            // Move Character
+            hero.style.left = `calc(10px + ${progressPercentage}%)`;
+
+            // Move Background (Parallax)
+            // Mountains move slower than character to create depth
+            mountains.style.transform = `translateX(-${progressPercentage * 1.5}px)`;
+
+            // Update UI
+            distanceDisplay.innerText = `${formatNum(totalStepsWalked)} m`;
+            
+            const newDiscount = calculateDiscount(totalStepsWalked);
+            discountPreview.innerText = `${newDiscount}%`;
+
+            // Wait for animation then show result
+            setTimeout(() => {
+                hero.classList.remove('walking');
+                showResult(stepsWalkedThisTurn, newDiscount);
+            }, 1000);
+        }
+
+        // Show Result Modal
+        function showResult(stepsAdded, currentDiscount) {
+            let title = "JOURNAL UPDATE";
+            let msg = `You walked ${formatNum(stepsAdded)} steps. <br>Total Distance: ${formatNum(totalStepsWalked)} m.`;
+            
+            if (totalStepsWalked >= MAX_STEPS_FOR_FULL_DISCOUNT && totalStepsWalked - stepsAdded < MAX_STEPS_FOR_FULL_DISCOUNT) {
+                // Just reached the castle
+                title = "CASTLE REACHED!";
+                msg = "You have arrived at the legendary Discount Castle!<br>The Merchant is impressed.";
+                launchConfetti();
+                addToHighScore(totalStepsWalked);
+            } else if (stepsAdded >= 1000) {
+                title = "MARATHON WALKER!";
+            }
+
+            modalTitle.innerText = title;
+            modalMessage.innerHTML = msg;
+            modalDiscount.innerText = `${currentDiscount}%`;
+            modalDiscount.style.color = getDiscountColor(currentDiscount);
+            
+            resultModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            resultModal.style.display = 'none';
+            stepInput.value = '';
+            stepInput.focus();
+        }
+
+        function getDiscountColor(discount) {
+            if(discount === 0) return '#777';
+            if(discount === 10) return '#00f3ff'; // Cyan
+            if(discount === 20) return '#fcee0a'; // Yellow
+            return '#00ff41'; // Green
+        }
+
+        // Simple High Score Logic
+        function addToHighScore(score) {
+            const newItem = document.createElement('li');
+            newItem.innerText = `YOU - ${formatNum(score)} Steps (50% Off)`;
+            newItem.style.color = '#00ff41';
+            
+            // Insert at top
+            scoreList.insertBefore(newItem, scoreList.firstChild);
+            
+            // Keep
+        }
